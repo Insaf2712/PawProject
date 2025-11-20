@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Attendance Table</title>
+  <style>
+    form {
+      width: 300px;
+      margin: 30px auto;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+    }
+    input {
+      width: 100%;
+      padding: 5px;
+      margin-top: 3px;
+    }
+    .error {
+      color: red;
+      font-size: 12px;
+    }
+    table {
+      border-collapse: collapse;
+      width: 90%;
+      margin: 30px auto;
+      font-family: Arial, sans-serif;
+    }
+
+    th, td {
+      border: 1px solid #000;
+      padding: 6px;
+      text-align: center;
+    }
+
+    th {
+      background-color: #e6e6e6;
+    }
+  
+    .green {
+      background-color: #c8f7c5;
+    }
+
+    .yellow {
+      background-color: #fff9c4;
+    }
+
+    .red {
+      background-color: #f8c4c4;
+    }
+
+    .editable {
+      cursor: pointer;
+    }
+    /* Hover highlight for rows */
+    .row-hover {
+      outline: 2px solid #4da6ff;
+      background-color: rgba(77,166,255,0.12);
+    }
+
+    /* Temporary highlight for excellent students */
+    .excellent {
+      background-color: #c8f7c5 !important;
+      transition: background-color 1s ease;
+    }
+  </style>
+  <!-- jQuery CDN -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+  <h2 style="text-align:center;">Attendance and Participation Table</h2>
+
+  <div style="text-align:center; margin:10px 0;">
+    <button id="highlightBtn" type="button">Highlight Excellent Students</button>
+    <button id="resetBtn" type="button">Reset Colors</button>
+    <button id="reportBtn" type="button">Show Report</button>
+  </div>
+
+  <div style="width: 90%; margin: 20px auto; text-align: center;">
+    <label for="searchInput" style="margin-right: 10px;"><b>Search by Name:</b></label>
+    <input type="text" id="searchInput" placeholder="Type a name...">
+    <button id="sortAbsBtn">Sort by Absences (Ascending)</button>
+    <button id="sortParBtn">Sort by Participation (Descending)</button>
+    <p id="sortStatus" style="margin-top: 10px; font-style: italic;"></p>
+  </div>
+
+  <table id="attendanceTable">
+    <thead>
+      <tr>
+        <th>Last Name</th>
+      <th>First Name</th>
+      <th colspan="6">Sessions</th>
+      <th colspan="6">Participation</th>
+      <th>Absences</th>
+      <th>Participation</th>
+      <th>Message</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+      <td contenteditable="true">Chegroune</td>
+      <td contenteditable="true">Ahlem</td>
+      <td class="editable">✓</td>
+      <td class="editable">✓</td>
+      <td class="editable"></td>
+      <td class="editable"></td>
+      <td class="editable"></td>
+      <td class="editable"></td>
+      <td class="editable">1</td>
+      <td class="editable"></td>
+      <td class="editable">1</td>
+      <td class="editable"></td>
+      <td class="editable"></td>
+      <td class="editable"></td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+
+    <tr>
+      <td contenteditable="true">Chegroune</td>
+      <td contenteditable="true">Insaf</td>
+      <td class="editable">✓</td>
+      <td class="editable"></td>
+      <td class="editable">✓</td>
+      <td class="editable">✓</td>
+      <td class="editable">✓</td>
+      <td class="editable">✓</td>
+      <td class="editable">1</td>
+      <td class="editable"></td>
+      <td class="editable">1</td>
+      <td class="editable">1</td>
+      <td class="editable">1</td>
+      <td class="editable"></td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+
+    <tr>
+      <td contenteditable="true">Boutaba</td>
+      <td contenteditable="true">Mohamed</td>
+      <td class="editable">✓</td>
+      <td class="editable">✓</td>
+      <td class="editable"></td>
+      <td class="editable">✓</td>
+      <td class="editable"></td>
+      <td class="editable"></td>
+      <td class="editable"></td>
+      <td class="editable">1</td>
+      <td class="editable"></td>
+      <td class="editable"></td>
+      <td class="editable"></td>
+      <td class="editable">1</td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+    </tbody>
+  </table>
+
+  <script>
+    const table = document.getElementById("attendanceTable");
+
+    
+    const editableCells = document.querySelectorAll('.editable');
+    editableCells.forEach(cell => {
+      cell.addEventListener('click', function() {
+        if (cell.cellIndex >= 2 && cell.cellIndex <= 7) { 
+          this.textContent = this.textContent === '✓' ? '' : '✓';
+        } else if (cell.cellIndex >= 8 && cell.cellIndex <= 13) { 
+          this.textContent = this.textContent === '1' ? '' : '1';
+        }
+        updateRow(this.parentElement);
+      });
+    });
+
+    function updateRow(row) {
+      let abs = 0;
+      let par = 0;
+
+      
+      for (let j = 2; j <= 7; j++) {
+        const value = row.cells[j].textContent.trim();
+        if (value === '') {
+          abs++;
+        }
+      }
+
+      
+      for (let j = 8; j <= 13; j++) {
+        const value = row.cells[j].textContent.trim();
+        if (value !== '') {
+          par++;
+        }
+      }
+
+      
+      row.cells[14].textContent = abs + " Abs";
+      row.cells[15].textContent = par + " Par";
+
+      
+      row.classList.remove('green', 'yellow', 'red');
+
+      
+      if (abs < 3) {
+        row.classList.add('green');
+      } else if (abs >= 3 && abs <= 4) {
+        row.classList.add('yellow');
+      } else {
+        row.classList.add('red');
+      }
+
+      
+      let message = "";
+      if (abs < 3 && par >= 3) {
+        message = "Good attendance – Excellent participation";
+      } else if (abs >= 3 && abs <= 4) {
+        message = "Warning – attendance low – You need to participate more";
+      } else if (abs >= 5) {
+        message = "Excluded – too many absences – You need to participate more";
+      }
+      row.cells[16].textContent = message;
+    }
+
+   
+    for (let i = 1; i < table.rows.length; i++) {
+      updateRow(table.rows[i]);
+    }
+  </script>
+
+  <script>
+    // jQuery behaviors
+    $(function() {
+      const $table = $('#attendanceTable');
+
+      // Hover
+      $table.on('mouseenter', 'tr', function() {
+        if ($(this).index() === 0) return; // skip header
+        $(this).addClass('row-hover');
+      });
+
+      $table.on('mouseleave', 'tr', function() {
+        $(this).removeClass('row-hover');
+      });
+
+      // Click row: show student's full name and number of absences
+      $table.on('click', 'tr', function(e) {
+        if ($(this).index() === 0) return; // skip header
+        // Prevent alert when clicking on editable cells
+        if ($(e.target).hasClass('editable') || $(e.target).prop('contenteditable') === 'true') return;
+
+        const $tds = $(this).find('td');
+        const last = $tds.eq(0).text().trim();
+        const first = $tds.eq(1).text().trim();
+        const absText = $tds.eq(14).text().trim();
+        const abs = parseInt(absText) || 0;
+        alert(first + ' ' + last + ' — Absences: ' + abs);
+      });
+
+      // Highlight Excellent Students absences < 3
+      $('#highlightBtn').on('click', function() {
+        $table.find('tr').each(function() {
+          if ($(this).index() === 0) return; // skip header
+          const $tds = $(this).find('td');
+          const abs = parseInt($tds.eq(14).text()) || 0;
+          if (abs < 3) {
+            // pulse animation using fadeOut/fadeIn then apply 'excellent' class
+            $(this).stop(true, true).fadeOut(200).fadeIn(200).fadeOut(200).fadeIn(200).addClass('excellent');
+          }
+        });
+      });
+
+      // Reset Colors
+      $('#resetBtn').on('click', function() {
+        $table.find('tr').each(function() {
+          $(this).stop(true, true).removeClass('excellent').css('opacity', '');
+        });
+      });
+
+      // Search by Name
+      $('#searchInput').on('keyup', function() {
+        const value = $(this).val().toLowerCase();
+        $('#attendanceTable tbody tr').filter(function() {
+          const lastName = $(this).find('td:eq(0)').text().toLowerCase();
+          const firstName = $(this).find('td:eq(1)').text().toLowerCase();
+          $(this).toggle(lastName.indexOf(value) > -1 || firstName.indexOf(value) > -1);
+        });
+      });
+
+      // Sort by Absences (Ascending)
+      $('#sortAbsBtn').on('click', function() {
+        const $tbody = $('#attendanceTable tbody');
+        $tbody.find('tr').sort(function(a, b) {
+          const absA = parseInt($(a).find('td:eq(14)').text()) || 0;
+          const absB = parseInt($(b).find('td:eq(14)').text()) || 0;
+          return absA - absB;
+        }).appendTo($tbody);
+        $('#sortStatus').text('Currently sorted by absences (ascending).');
+      });
+
+      // Sort by Participation (Descending)
+      $('#sortParBtn').on('click', function() {
+        const $tbody = $('#attendanceTable tbody');
+        $tbody.find('tr').sort(function(a, b) {
+          const parA = parseInt($(a).find('td:eq(15)').text()) || 0;
+          const parB = parseInt($(b).find('td:eq(15)').text()) || 0;
+          return parB - parA;
+        }).appendTo($tbody);
+        $('#sortStatus').text('Currently sorted by participation (descending).');
+      });
+    });
+  </script>
+  <h2 style="text-align:center;">Add Student</h2>
+
+<form id="studentForm">
+  <label>Student ID:
+    <input type="text" id="studentId">
+    <div id="idError" class="error"></div>
+  </label>
+
+  <label>Last Name:
+    <input type="text" id="lastName">
+    <div id="lastError" class="error"></div>
+  </label>
+
+  <label>First Name:
+    <input type="text" id="firstName">
+    <div id="firstError" class="error"></div>
+  </label>
+
+  <label>Email:
+ <input type="text" id="email">
+    <div id="emailError" class="error"></div>
+  </label>
+
+  <br>
+  <button type="submit">Add Student</button>
+</form>
+
+<script>
+  const form = document.getElementById("studentForm");
+
+  form.addEventListener("submit", function(e) {
+    e.preventDefault();
+
+    let valid = true;
+    
+    document.querySelectorAll(".error").forEach(el => el.textContent = "");
+
+    const id = document.getElementById("studentId").value.trim();
+    const last = document.getElementById("lastName").value.trim();
+    const first = document.getElementById("firstName").value.trim();
+    const email = document.getElementById("email").value.trim();
+
+    if (id === "" || !/^[0-9]+$/.test(id)) {
+      document.getElementById("idError").textContent = "Student ID must contain only numbers.";
+      valid = false;
+    }
+
+    if (last === "" || !/^[A-Za-z]+$/.test(last)) {
+      document.getElementById("lastError").textContent = "Last Name must contain only letters.";
+      valid = false;
+    }
+
+    if (first === "" || !/^[A-Za-z]+$/.test(first)) {
+      document.getElementById("firstError").textContent = "First Name must contain only letters.";
+      valid = false;
+    }
+
+    if (email === "" || !/^[^ ]+@[^ ]+\.[a-z]{2,3}$/.test(email)) {
+      document.getElementById("emailError").textContent = "Invalid email format.";
+      valid = false;
+    }
+
+    if (valid) {
+      // Create new row
+      const table = document.getElementById("attendanceTable");
+      const newRow = table.insertRow(-1);
+
+      // Add name cells
+      const lastNameCell = newRow.insertCell(0);
+      const firstNameCell = newRow.insertCell(1);
+      lastNameCell.contentEditable = true;
+      firstNameCell.contentEditable = true;
+      lastNameCell.textContent = last;
+      firstNameCell.textContent = first;
+
+      // Add attendance cells
+      for (let i = 0; i < 6; i++) {
+        const cell = newRow.insertCell(i + 2);
+        cell.className = 'editable';
+        cell.textContent = '';
+        cell.addEventListener('click', function() {
+          this.textContent = this.textContent === '✓' ? '' : '✓';
+          updateRow(this.parentElement);
+        });
+      }
+
+      // Add participation cells
+      for (let i = 0; i < 6; i++) {
+        const cell = newRow.insertCell(i + 8);
+        cell.className = 'editable';
+        cell.textContent = '';
+        cell.addEventListener('click', function() {
+          this.textContent = this.textContent === '1' ? '' : '1';
+          updateRow(this.parentElement);
+        });
+      }
+
+      // Add summary cells
+      for (let i = 0; i < 3; i++) {
+        newRow.insertCell(i + 14).textContent = '';
+      }
+
+      // Update the new row
+      updateRow(newRow);
+
+      // Reset form
+      form.reset();
+      alert("Student added successfully!");
+    }
+  });
+</script>
+
+<div id="reportSection" style="display:none; width: 60%; margin: 40px auto; text-align:center;">
+  <h2 style="text-align:center;">Attendance Report</h2>
+  <canvas id="reportChart"></canvas>
+  <div id="reportStats" style="margin-top: 20px; font-size: 18px;"></div>
+</div>
+
+<script>
+  let reportChart = null; // To hold the chart instance
+
+  document.getElementById("reportBtn").addEventListener("click", function() {
+    const table = document.getElementById("attendanceTable");
+    const rows = table.querySelectorAll("tr");
+    const studentRows = Array.from(rows).slice(1); // Exclude header row
+
+    const totalStudents = studentRows.length;
+    let presentStudents = 0;
+    let participatedStudents = 0;
+
+    studentRows.forEach(row => {
+      let isPresent = false;
+      for (let i = 2; i <= 7; i++) { // Attendance cells
+        if (row.cells[i].textContent.trim() === '✓') {
+          isPresent = true;
+          break;
+        }
+      }
+      if (isPresent) {
+        presentStudents++;
+      }
+
+      let hasParticipated = false;
+      for (let i = 8; i <= 13; i++) { // Participation cells
+        if (row.cells[i].textContent.trim() === '1') {
+          hasParticipated = true;
+          break;
+        }
+      }
+      if (hasParticipated) {
+        participatedStudents++;
+      }
+    });
+
+    // Display stats text
+    const reportStats = document.getElementById("reportStats");
+    reportStats.innerHTML = `
+      <p><strong>Total Students:</strong> ${totalStudents}</p>
+      <p><strong>Students Present (at least once):</strong> ${presentStudents}</p>
+      <p><strong>Students Who Participated (at least once):</strong> ${participatedStudents}</p>
+    `;
+
+    // Display chart
+    const ctx = document.getElementById('reportChart').getContext('2d');
+    
+    // Destroy previous chart instance if it exists
+    if (reportChart) {
+      reportChart.destroy();
+    }
+
+    reportChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Total Students', 'Present', 'Participated'],
+        datasets: [{
+          label: 'Student Statistics',
+          data: [totalStudents, presentStudents, participatedStudents],
+          backgroundColor: [
+            'rgba(54, 162, 235, 0.6)',
+            'rgba(75, 192, 192, 0.6)',
+            'rgba(255, 206, 86, 0.6)'
+          ],
+          borderColor: [
+            'rgba(54, 162, 235, 1)',
+            'rgba(75, 192, 192, 1)',
+            'rgba(255, 206, 86, 1)'
+          ],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              stepSize: 1 // Ensure y-axis has integer steps
+            }
+          }
+        }
+      }
+    });
+
+    // Show the report section
+    document.getElementById("reportSection").style.display = "block";
+  });
+</script>
+
+</body>
+</html>
+
