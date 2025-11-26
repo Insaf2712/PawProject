@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance List - Attendance System</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="navbar">
+  <a href="home.html">Home</a>
+  <a href="attendance.html" class="active">Attendance List</a>
+  <a href="add.html">Add Student</a>
+  <a href="reports.html">Reports</a>
+  <a href="logout.html">Logout</a>
+</div>
+
+<div class="container">
+  <div class="content-card">
+    <h2>Attendance List</h2>
+    <p>View and manage student attendance records for all sessions.</p>
+
+    <div class="search-container">
+      <input type="text" id="searchInput" placeholder="🔍 Search by Name...">
+    </div>
+
+    <div class="table-container">
+      <table>
+    <thead>
+      <tr>
+        <th rowspan="2">Last Name</th>
+        <th rowspan="2">First Name</th>
+        <th colspan="2">S1</th>
+        <th colspan="2">S2</th>
+        <th colspan="2">S3</th>
+        <th colspan="2">S4</th>
+        <th colspan="2">S5</th>
+        <th colspan="2">S6</th>
+        <th rowspan="2">Absences</th>
+        <th rowspan="2">Participation</th>
+        <th rowspan="2">Message</th>
+      </tr>
+      <tr>
+        <th>P</th><th>Pa</th>
+        <th>P</th><th>Pa</th>
+        <th>P</th><th>Pa</th>
+        <th>P</th><th>Pa</th>
+        <th>P</th><th>Pa</th>
+        <th>P</th><th>Pa</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Student rows will be loaded dynamically here -->
+    </tbody>
+      </table>
+    </div>
+
+    <div class="btn-group">
+      <button id="generateReportBtn" class="btn btn-primary">📊 Generate Report Data</button>
+      <button id="highlightExcellentBtn" class="btn btn-secondary">⭐ Highlight Excellent Students</button>
+      <button id="resetColorsBtn" class="btn">🔄 Reset Colors</button>
+      <button id="sortAbsencesBtn" class="btn">📈 Sort by Absences (Ascending)</button>
+      <button id="sortParticipationBtn" class="btn">📊 Sort by Participation (Descending)</button>
+    </div>
+
+    <p id="sortStatus"></p>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+    function processStudentRow(row) {
+        const cells = row.getElementsByTagName('td');
+        let absences = 0;
+        let participations = 0;
+
+        for (let i = 2; i < 14; i += 2) {
+            const presenceCheckbox = cells[i].querySelector('input[type="checkbox"]');
+            const participationCheckbox = cells[i + 1].querySelector('input[type="checkbox"]');
+
+            if (presenceCheckbox && !presenceCheckbox.checked) {
+                absences++;
+            }
+            if (participationCheckbox && participationCheckbox.checked) {
+                participations++;
+            }
+        }
+
+        const absencesCell = cells[14];
+        const participationCell = cells[15];
+        absencesCell.textContent = `${absences} Abs`;
+        participationCell.textContent = `${participations} Par`;
+
+        row.className = ''; // Clear existing classes
+        if (absences >= 5) {
+            row.style.backgroundColor = 'rgba(239, 68, 68, 0.1)'; // Light red
+            row.style.borderLeft = '4px solid #ef4444';
+        } else if (absences >= 3) {
+            row.style.backgroundColor = 'rgba(245, 158, 11, 0.1)'; // Light yellow
+            row.style.borderLeft = '4px solid #f59e0b';
+        } else {
+            row.style.backgroundColor = 'rgba(16, 185, 129, 0.1)'; // Light green
+            row.style.borderLeft = '4px solid #10b981';
+        }
+
+        const messageCell = cells[16];
+        let attendanceMsg = '';
+        let participationMsg = '';
+
+        if (absences >= 5) {
+            attendanceMsg = 'Excluded – too many absences';
+        } else if (absences >= 3) {
+            attendanceMsg = 'Warning – attendance low';
+        } else {
+            attendanceMsg = 'Good attendance';
+        }
+
+        if (participations >= 4) {
+            participationMsg = 'Excellent participation';
+        } else {
+            participationMsg = 'You need to participate more';
+        }
+
+        messageCell.textContent = `${attendanceMsg} – ${participationMsg}`;
+    }
+
+    function loadInitialStudents(callback) {
+        fetch('students.json')
+            .then(response => response.json())
+            .then(students => {
+                const tableBody = document.querySelector('table tbody');
+                tableBody.innerHTML = ''; // Clear any existing rows
+                students.forEach(student => {
+                    const newRow = tableBody.insertRow();
+                    let cellsHTML = `
+                        <td>${student.lastName}</td>
+                        <td>${student.firstName}</td>
+                    `;
+                    for (let i = 1; i <= 6; i++) {
+                        const sessionKey = `s${i}`;
+                        const sessionData = student.sessions[sessionKey] || {p: false, pa: false};
+                        const presenceChecked = sessionData.p ? 'checked' : '';
+                        const participationChecked = sessionData.pa ? 'checked' : '';
+                        cellsHTML += `
+                            <td><input type="checkbox" ${presenceChecked}></td>
+                            <td><input type="checkbox" ${participationChecked}></td>
+                        `;
+                    }
+                    cellsHTML += `
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    `;
+                    newRow.innerHTML = cellsHTML;
+                });
+                if (callback) callback();
+            })
+            .catch(error => {
+                console.error('Error loading students.json:', error);
+                if (callback) callback(); // Still run callback to load from localStorage
+            });
+    }
+
+    function loadNewStudents() {
+        const newStudents = JSON.parse(localStorage.getItem('newStudents')) || [];
+        if (newStudents.length > 0) {
+            const tableBody = document.querySelector('table tbody');
+            newStudents.forEach(student => {
+                const newRow = tableBody.insertRow();
+                newRow.innerHTML = `
+                    <td>${student.lastName}</td>
+                    <td>${student.firstName}</td>
+                    <td><input type="checkbox"></td><td><input type="checkbox"></td>
+                    <td><input type="checkbox"></td><td><input type="checkbox"></td>
+                    <td><input type="checkbox"></td><td><input type="checkbox"></td>
+                    <td><input type="checkbox"></td><td><input type="checkbox"></td>
+                    <td><input type="checkbox"></td><td><input type="checkbox"></td>
+                    <td><input type="checkbox"></td><td><input type="checkbox"></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                `;
+                processStudentRow(newRow);
+            });
+            // Clear the storage after adding them to the table
+            localStorage.removeItem('newStudents');
+        }
+    }
+
+    function initializeTable() {
+        loadInitialStudents(() => {
+            loadNewStudents();
+            document.querySelectorAll('tbody tr').forEach(processStudentRow);
+        });
+    }
+
+    initializeTable();
+
+    const generateReportBtn = document.getElementById('generateReportBtn');
+
+    generateReportBtn.addEventListener('click', function() {
+        const studentRows = document.querySelectorAll('tbody tr');
+        const totalStudents = studentRows.length;
+        let presentStudents = 0;
+        let participatedStudents = 0;
+
+        studentRows.forEach(row => {
+            const cells = row.getElementsByTagName('td');
+            let studentIsPresent = false;
+            let studentHasParticipated = false;
+
+            for (let i = 2; i < 14; i += 2) {
+                const presenceCheckbox = cells[i].querySelector('input[type="checkbox"]');
+                if (presenceCheckbox && presenceCheckbox.checked) {
+                    studentIsPresent = true;
+                }
+                const participationCheckbox = cells[i + 1].querySelector('input[type="checkbox"]');
+                if (participationCheckbox && participationCheckbox.checked) {
+                    studentHasParticipated = true;
+                }
+            }
+
+            if (studentIsPresent) {
+                presentStudents++;
+            }
+            if (studentHasParticipated) {
+                participatedStudents++;
+            }
+        });
+
+        const reportData = {
+            totalStudents: totalStudents,
+            presentStudents: presentStudents,
+            participatedStudents: participatedStudents
+        };
+
+        localStorage.setItem('reportData', JSON.stringify(reportData));
+        alert('Report data has been generated. You can now view the report on the Reports page.');
+    });
+
+    // jQuery code for table interactivity
+    $(document).ready(function(){
+        // Recalculate row on checkbox change
+        $('tbody').on('change', 'input[type="checkbox"]', function() {
+            const row = $(this).closest('tr')[0]; // Get the DOM element for the row
+            processStudentRow(row);
+        });
+
+        // Highlight row on hover
+        $('tbody tr').hover(
+            function() {
+                $(this).addClass('highlight');
+            }, 
+            function() {
+                $(this).removeClass('highlight');
+            }
+        );
+
+        // Show student info on row click
+        $('tbody tr').click(function(e){
+            // Ignore clicks on checkboxes
+            if ($(e.target).is('input[type="checkbox"]')) {
+                return;
+            }
+
+            const lastName = $(this).find('td:eq(0)').text();
+            const firstName = $(this).find('td:eq(1)').text();
+            const absences = $(this).find('td:eq(14)').text();
+
+            alert(`Student: ${firstName} ${lastName}\nAbsences: ${absences}`);
+        });
+
+        // Highlight excellent students on button click
+        $('#highlightExcellentBtn').click(function() {
+            $('tbody tr').each(function() {
+                const absencesText = $(this).find('td:eq(14)').text();
+                const absences = parseInt(absencesText) || 0;
+                if (absences < 3) {
+                    $(this).fadeOut(500).fadeIn(500);
+                }
+            });
+        });
+
+        // Reset colors on button click
+        $('#resetColorsBtn').click(function() {
+            document.querySelectorAll('tbody tr').forEach(processStudentRow);
+        });
+
+        // Search by name
+        $('#searchInput').on('keyup', function() {
+            const value = $(this).val().toLowerCase();
+            $('tbody tr').filter(function() {
+                const lastName = $(this).find('td:eq(0)').text().toLowerCase();
+                const firstName = $(this).find('td:eq(1)').text().toLowerCase();
+                $(this).toggle(lastName.indexOf(value) > -1 || firstName.indexOf(value) > -1);
+            });
+        });
+
+        // Sort by absences (ascending)
+        $('#sortAbsencesBtn').click(function() {
+            const rows = $('tbody tr').get();
+            rows.sort(function(a, b) {
+                const valA = parseInt($(a).find('td:eq(14)').text()) || 0;
+                const valB = parseInt($(b).find('td:eq(14)').text()) || 0;
+                return valA - valB;
+            });
+            $.each(rows, function(index, row) {
+                $('tbody').append(row);
+            });
+            $('#sortStatus').text('Currently sorted by absences (ascending).');
+        });
+
+        // Sort by participation (descending)
+        $('#sortParticipationBtn').click(function() {
+            const rows = $('tbody tr').get();
+            rows.sort(function(a, b) {
+                const valA = parseInt($(a).find('td:eq(15)').text()) || 0;
+                const valB = parseInt($(b).find('td:eq(15)').text()) || 0;
+                return valB - valA;
+            });
+            $.each(rows, function(index, row) {
+                $('tbody').append(row);
+            });
+            $('#sortStatus').text('Currently sorted by participation (descending).');
+        });
+    });
+});
+</script>
+
+</body>
+</html>

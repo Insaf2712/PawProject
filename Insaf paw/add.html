@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Student - Attendance System</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="navbar">
+  <a href="home.html">Home</a>
+  <a href="attendance.html">Attendance List</a>
+  <a href="add.html" class="active">Add Student</a>
+  <a href="reports.html">Reports</a>
+  <a href="logout.html">Logout</a>
+</div>
+
+<div class="container">
+  <div class="content-card">
+    <h2>Add New Student</h2>
+    <p>Use the form below to register a new student in the attendance system.</p>
+    <div id="confirmationMessage"></div>
+
+    <div class="form-card">
+      <form id="addStudentForm">
+        <div class="form-group">
+          <label for="student_id">Student ID</label>
+          <input type="text" id="student_id" name="student_id" required placeholder="Enter student ID (numbers only)">
+          <span id="student_id_error" class="error"></span>
+        </div>
+
+        <div class="form-group">
+          <label for="last_name">Last Name</label>
+          <input type="text" id="last_name" name="last_name" required placeholder="Enter last name">
+          <span id="last_name_error" class="error"></span>
+        </div>
+
+        <div class="form-group">
+          <label for="first_name">First Name</label>
+          <input type="text" id="first_name" name="first_name" required placeholder="Enter first name">
+          <span id="first_name_error" class="error"></span>
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" required placeholder="Enter email address">
+          <span id="email_error" class="error"></span>
+        </div>
+
+        <input type="submit" value="Add Student">
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('addStudentForm').addEventListener('submit', function(event) {
+    event.preventDefault(); // Prevent form submission to handle it with JS
+
+    let isValid = true;
+    // Clear previous errors
+    document.querySelectorAll('.error').forEach(e => e.textContent = '');
+    const confirmationMessage = document.getElementById('confirmationMessage');
+    confirmationMessage.textContent = '';
+
+    // Student ID validation
+    const studentId = document.getElementById('student_id').value;
+    if (studentId.trim() === '' || !/^[0-9]+$/.test(studentId)) {
+        document.getElementById('student_id_error').textContent = 'Student ID must not be empty and contain only numbers.';
+        isValid = false;
+    }
+
+    // Last Name validation
+    const lastName = document.getElementById('last_name').value;
+    if (!/^[a-zA-Z]+$/.test(lastName)) {
+        document.getElementById('last_name_error').textContent = 'Last Name must contain only letters.';
+        isValid = false;
+    }
+
+    // First Name validation
+    const firstName = document.getElementById('first_name').value;
+    if (!/^[a-zA-Z]+$/.test(firstName)) {
+        document.getElementById('first_name_error').textContent = 'First Name must contain only letters.';
+        isValid = false;
+    }
+
+    // Email validation
+    const email = document.getElementById('email').value;
+    const emailRegex = /^[\w.-]+@[\w.-]+\.[a-zA-Z]{2,6}$/;
+    if (!emailRegex.test(email)) {
+        document.getElementById('email_error').textContent = 'Please enter a valid email address (e.g., name@example.com).';
+        isValid = false;
+    }
+
+    if (isValid) {
+        const newStudent = {
+            lastName: document.getElementById('last_name').value,
+            firstName: document.getElementById('first_name').value,
+        };
+
+        // Save student to localStorage to be picked up by attendance.html
+        let students = JSON.parse(localStorage.getItem('newStudents')) || [];
+        students.push(newStudent);
+        localStorage.setItem('newStudents', JSON.stringify(students));
+
+        // Show confirmation message and reset the form
+        confirmationMessage.innerHTML = '<div class="success-message">✓ Student added successfully!</div>';
+        document.getElementById('addStudentForm').reset();
+
+        // Optionally, hide the message after a few seconds
+        setTimeout(() => {
+            confirmationMessage.textContent = '';
+        }, 3000);
+    }
+});
+</script>
+
+</body>
+</html>

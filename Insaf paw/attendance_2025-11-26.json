@@ -1,0 +1,18 @@
+[
+    {
+        "student_id": "STU0001",
+        "status": "present"
+    },
+    {
+        "student_id": "STU0002",
+        "status": "present"
+    },
+    {
+        "student_id": "STU0003",
+        "status": "present"
+    },
+    {
+        "student_id": "7665890",
+        "status": "present"
+    }
+]

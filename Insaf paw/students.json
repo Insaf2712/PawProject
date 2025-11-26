@@ -1,0 +1,125 @@
+[
+    {
+        "lastName": "Ahmed",
+        "firstName": "Sara",
+        "sessions": {
+            "s1": {
+                "p": false,
+                "pa": false
+            },
+            "s2": {
+                "p": true,
+                "pa": true
+            },
+            "s3": {
+                "p": false,
+                "pa": false
+            },
+            "s4": {
+                "p": false,
+                "pa": false
+            },
+            "s5": {
+                "p": false,
+                "pa": false
+            },
+            "s6": {
+                "p": false,
+                "pa": false
+            }
+        }
+    },
+    {
+        "lastName": "Yacine",
+        "firstName": "Ali",
+        "sessions": {
+            "s1": {
+                "p": true,
+                "pa": false
+            },
+            "s2": {
+                "p": false,
+                "pa": false
+            },
+            "s3": {
+                "p": true,
+                "pa": true
+            },
+            "s4": {
+                "p": true,
+                "pa": true
+            },
+            "s5": {
+                "p": true,
+                "pa": true
+            },
+            "s6": {
+                "p": true,
+                "pa": false
+            }
+        }
+    },
+    {
+        "lastName": "Houcine",
+        "firstName": "Rania",
+        "sessions": {
+            "s1": {
+                "p": true,
+                "pa": true
+            },
+            "s2": {
+                "p": false,
+                "pa": false
+            },
+            "s3": {
+                "p": true,
+                "pa": true
+            },
+            "s4": {
+                "p": false,
+                "pa": false
+            },
+            "s5": {
+                "p": false,
+                "pa": false
+            },
+            "s6": {
+                "p": false,
+                "pa": false
+            }
+        }
+    },
+    {
+        "student_id": "7665890",
+        "lastName": "chegroune",
+        "firstName": "Ahlem",
+        "name": "Ahlem chegroune",
+        "group": "3",
+        "sessions": {
+            "s1": {
+                "p": false,
+                "pa": false
+            },
+            "s2": {
+                "p": false,
+                "pa": false
+            },
+            "s3": {
+                "p": false,
+                "pa": false
+            },
+            "s4": {
+                "p": false,
+                "pa": false
+            },
+            "s5": {
+                "p": false,
+                "pa": false
+            },
+            "s6": {
+                "p": false,
+                "pa": false
+            }
+        }
+    }
+]
