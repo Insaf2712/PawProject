@@ -1,0 +1,7 @@
+# Autoriser l'accès aux justificatifs
+Options -Indexes
+<FilesMatch "\.(pdf|jpg|jpeg|png)$">
+    Order Allow,Deny
+    Allow from all
+</FilesMatch>
+
